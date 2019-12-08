@@ -24,7 +24,7 @@
           />
         </div>
         <div class="weatherDescription">
-          <div>
+          <div class="weatherTemp">
             {{ weather.temp }}
           </div>
           <div>
@@ -83,7 +83,23 @@ export default {
       date: ""
     };
   },
+  mounted() {
+    console.log("here");
+    try {
+      this.getUserLocation();
+    } catch (e) {}
+  },
   methods: {
+    getUserLocation() {
+      navigator.geolocation.getCurrentPosition(async data => {
+        const response = await axios.get(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=-20.0105723,-44.010382899999996&key=AIzaSyBLbn4OpEK-gagOHy7z9ENy4jAWRm3N3OI`
+        );
+        console.log(response);
+        this.endereco = response.data.results[0].formatted_address;
+        this.getData();
+      });
+    },
     async getData() {
       const address = this.endereco;
 
@@ -165,6 +181,10 @@ export default {
   padding: 10px;
   border-radius: 10px;
   min-height: 300px;
+}
+
+.weatherTemp {
+  font-size: 250%;
 }
 
 .input-div {
