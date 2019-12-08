@@ -2,6 +2,9 @@ import { shallowMount } from '@vue/test-utils'
 import mainComponent from '@/components/mainComponent.vue'
 import axios from 'axios'
 import { GOOGLE_API_KEY, OPENWEATHERMAP_KEY } from "@/API_KEY";
+import * as moment from "moment";
+import "moment/locale/pt-br";
+moment.locale("pt-BR");
 
 jest.mock('axios')
 
@@ -28,7 +31,16 @@ describe('HelloWorld.vue', () => {
       weather: [{
         icon: '10',
         description: 'test'
-      }]
+      }],
+      main: {
+        temp: 10.5
+      }
+    }
+  }))
+
+  axios.get.mockImplementationOnce(() => Promise.resolve({
+    data: {
+      list: []
     }
   }))
 
@@ -43,9 +55,9 @@ describe('HelloWorld.vue', () => {
     expect(axios.get).toHaveBeenCalledWith(`https://maps.googleapis.com/maps/api/geocode/json?address=${endereco}&key=${GOOGLE_API_KEY}`)
     expect(wrapper.vm.lat).toBe(1)
     expect(wrapper.vm.lng).toBe(2)
-    expect(wrapper.vm.formatted_address).toBe(endereco)
     await wrapper.vm.$nextTick();
-    expect(wrapper.vm.weatherIcon).toBe(`http://openweathermap.org/img/wn/10.png`)
-    expect(wrapper.vm.weatherDescription).toBe('test')
+    expect(wrapper.vm.formatted_address).toBe(endereco)
+    expect(wrapper.vm.weather.weatherIcon).toBe(`10`)
+    expect(wrapper.vm.weather.weatherDescription).toBe('test')
   })
 })

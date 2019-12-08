@@ -1,10 +1,18 @@
 <template>
   <div>
-    <input type="text" v-model="endereco" @change="getData" />
     <div class="addres">
+      <div class="input-div">
+        <input
+          type="text"
+          v-model="endereco"
+          @change="getData"
+          placeholder="Digite sua localização"
+        />
+      </div>
+
       <div class="formatted_address">{{ formatted_address }}</div>
       <div>{{ date }}</div>
-      {{ weather.weatherDescription }}
+      <div class="weatherDescriptionText">{{ weather.weatherDescription }}</div>
       <div class="weather">
         <div>
           <img
@@ -36,6 +44,7 @@
             />
           </div>
           <div>{{ n.description }}</div>
+          <div>{{ n.data }}</div>
         </div>
       </div>
     </div>
@@ -102,7 +111,6 @@ export default {
         const weather = await axios.get(
           `https://openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${OPENWEATHERMAP_KEY}`
         );
-        console.log(1, weather.data);
         this.weather.weatherIcon = weather.data.weather[0].icon;
         this.weather.weatherDescription = weather.data.weather[0].description;
         this.formatted_address = formatted_address;
@@ -114,7 +122,9 @@ export default {
           weather.data.main.temp_min
         )}`;
         this.weather.humidity = `Umidade: ${weather.data.main.humidity}`;
-        this.date = moment().format("LLLL");
+        try {
+          this.date = moment().format("LLLL");
+        } catch (e) {}
       } catch (error) {
         console.log(error);
       }
@@ -129,17 +139,17 @@ export default {
           `https://openweathermap.org/data/2.5/forecast/daily?lat=${lat}&lon=${lng}&cnt=24&appid=${OPENWEATHERMAP_KEY}`
         );
         const weatherList = weathers.data.list.slice(1, 8);
-        console.log(weatherList);
         weatherList.forEach(el => {
+          const date = new Date(el.dt * 1000);
+          const newDate = moment(date);
           this.nextWeather.push({
-            data: new Date(el.dt * 1000),
+            data: newDate.format("ddd"),
             max: Math.round(el.temp.max),
             min: Math.round(el.temp.min),
             description: el.weather[0].main,
             img: el.weather[0].icon
           });
         });
-        console.log(2, this.nextWeather);
       } catch (error) {
         console.log(error);
       }
@@ -151,8 +161,33 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .addres {
-  border: solid 1px #ddd;
+  /* border: solid 1px #ddd; */
   padding: 10px;
+  border-radius: 10px;
+  min-height: 300px;
+}
+
+.input-div {
+  margin-bottom: 10px;
+}
+
+.input-div input {
+  width: 95%;
+  height: calc(0.7em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 0.7;
+  color: #fff;
+  background-color: #008baa;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.input-div input::placeholder {
+  color: #ccc;
 }
 
 .formatted_address {
@@ -176,5 +211,11 @@ export default {
 .next {
   display: flex;
   justify-content: space-around;
+  font-size: 80%;
+  margin-top: 10px;
+}
+
+.weatherDescriptionText {
+  margin-top: 20px;
 }
 </style>
