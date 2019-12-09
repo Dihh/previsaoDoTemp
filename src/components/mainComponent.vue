@@ -119,6 +119,7 @@ export default {
       });
     },
     async getData() {
+      this.$store.commit("setLoader", true);
       try {
         const address = await api.getData(this.address.endereco);
         const weather = await api.getweather(
@@ -143,6 +144,7 @@ export default {
       } catch (error) {
         console.log(error);
       }
+      this.$store.commit("setLoader", false);
     }
   }
 };
