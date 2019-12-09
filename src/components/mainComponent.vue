@@ -21,6 +21,7 @@
             "
             alt=""
             class="main-icon"
+            v-if="weather.weatherIcon"
           />
         </div>
         <div class="weatherDescription">
@@ -52,12 +53,13 @@
 </template>
 
 <script>
-const axios = require("axios").default;
 import { GOOGLE_API_KEY, OPENWEATHERMAP_KEY } from "@/API_KEY";
 import * as moment from "moment";
 import "moment/locale/pt-br";
 moment.locale("pt-BR");
+const axios = require("axios").default;
 
+import api from "@/api/api";
 export default {
   name: "mainComponent",
   props: {},
@@ -75,97 +77,38 @@ export default {
         temp_min: "",
         humidity: ""
       },
-      nextWeather: [
-        // { desc: "a", id: 1 },
-        // { desc: "b", id: 1 },
-        // { desc: "c", id: 1 }
-      ],
+      nextWeather: [],
       date: ""
     };
   },
   mounted() {
-    console.log("here");
     try {
       this.getUserLocation();
     } catch (e) {}
   },
   methods: {
-    getUserLocation() {
+    async getUserLocation() {
       navigator.geolocation.getCurrentPosition(async data => {
-        const response = await axios.get(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=-20.0105723,-44.010382899999996&key=AIzaSyBLbn4OpEK-gagOHy7z9ENy4jAWRm3N3OI`
+        this.endereco = await api.getUserLocation(
+          data.coords.latitude,
+          data.coords.longitude
         );
-        console.log(response);
-        this.endereco = response.data.results[0].formatted_address;
         this.getData();
       });
     },
     async getData() {
-      const address = this.endereco;
-
       try {
-        const response = await axios.get(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${GOOGLE_API_KEY}`
+        this.date = moment().format("LLLL");
+        const address = await api.getData(this.endereco);
+        this.lat = address.lat;
+        this.lng = address.lng;
+        this.weather = await api.getweather(
+          this.lat,
+          this.lng,
+          address.formatted_address
         );
-        if (response.data.results.length > 0) {
-          this.lat = response.data.results[0].geometry.location.lat;
-          this.lng = response.data.results[0].geometry.location.lng;
-          const formatted_address = response.data.results[0].formatted_address;
-          this.getweather(this.lat, this.lng, formatted_address);
-        } else {
-          this.formatted_address = "endereço não encontrado";
-          this.lat = "";
-          this.lng = "";
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async getweather(lat, lng, formatted_address) {
-      try {
-        const weather = await axios.get(
-          `https://openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${OPENWEATHERMAP_KEY}`
-        );
-        this.weather.weatherIcon = weather.data.weather[0].icon;
-        this.weather.weatherDescription = weather.data.weather[0].description;
-        this.formatted_address = formatted_address;
-        this.weather.temp = `${Math.round(weather.data.main.temp)} C°`;
-        this.weather.temp_max = `Max: ${Math.round(
-          weather.data.main.temp_max
-        )}`;
-        this.weather.temp_min = `Min: ${Math.round(
-          weather.data.main.temp_min
-        )}`;
-        this.weather.humidity = `Umidade: ${weather.data.main.humidity}`;
-        try {
-          this.date = moment().format("LLLL");
-        } catch (e) {}
-      } catch (error) {
-        console.log(error);
-      }
-
-      this.nextDays(lat, lng);
-    },
-
-    async nextDays(lat, lng) {
-      this.nextWeather = [];
-      try {
-        const weathers = await axios.get(
-          `https://openweathermap.org/data/2.5/forecast/daily?lat=${lat}&lon=${lng}&cnt=24&appid=${OPENWEATHERMAP_KEY}`
-        );
-        const weatherList = weathers.data.list.slice(1, 8);
-        weatherList.forEach(el => {
-          const date = new Date(el.dt * 1000);
-          const newDate = moment(date);
-          this.nextWeather.push({
-            data: newDate.format("ddd"),
-            max: Math.round(el.temp.max),
-            min: Math.round(el.temp.min),
-            description: el.weather[0].main,
-            img: el.weather[0].icon
-          });
-        });
+        this.formatted_address = address.formatted_address;
+        this.nextWeather = await api.nextWeather();
       } catch (error) {
         console.log(error);
       }
