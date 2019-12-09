@@ -4,39 +4,41 @@
       <div class="input-div">
         <input
           type="text"
-          v-model="endereco"
+          v-model="address.endereco"
           @change="getData"
           placeholder="Digite sua localização"
         />
       </div>
 
-      <div class="formatted_address">{{ formatted_address }}</div>
-      <div>{{ date }}</div>
-      <div class="weatherDescriptionText">{{ weather.weatherDescription }}</div>
+      <div class="formatted_address">{{ address.formatted_address }}</div>
+      <div>{{ address.date }}</div>
+      <div class="weatherDescriptionText">
+        {{ address.weather.weatherDescription }}
+      </div>
       <div class="weather">
         <div>
           <img
             :src="
-              `http://openweathermap.org/img/wn/${weather.weatherIcon}@2x.png`
+              `http://openweathermap.org/img/wn/${address.weather.weatherIcon}@2x.png`
             "
             alt=""
             class="main-icon"
-            v-if="weather.weatherIcon"
+            v-if="address.weather.weatherIcon"
           />
         </div>
         <div class="weatherDescription">
           <div class="weatherTemp">
-            {{ weather.temp }}
+            {{ address.weather.temp }}
           </div>
           <div>
-            <div>{{ weather.temp_max }}</div>
-            <div>{{ weather.temp_min }}</div>
-            <div>{{ weather.humidity }}</div>
+            <div>{{ address.weather.temp_max }}</div>
+            <div>{{ address.weather.temp_min }}</div>
+            <div>{{ address.weather.humidity }}</div>
           </div>
         </div>
       </div>
       <div class="next">
-        <div v-for="n in nextWeather" :key="n.id">
+        <div v-for="n in address.nextWeather" :key="n.id">
           <div>
             <img
               :src="`http://openweathermap.org/img/wn/${n.img}.png`"
@@ -53,11 +55,9 @@
 </template>
 
 <script>
-import { GOOGLE_API_KEY, OPENWEATHERMAP_KEY } from "@/API_KEY";
 import * as moment from "moment";
 import "moment/locale/pt-br";
 moment.locale("pt-BR");
-const axios = require("axios").default;
 
 import api from "@/api/api";
 export default {
@@ -65,31 +65,53 @@ export default {
   props: {},
   data() {
     return {
-      endereco: "",
-      lat: "",
-      lng: "",
-      formatted_address: "",
-      weather: {
-        weatherIcon: "",
-        weatherDescription: "",
-        temp: "",
-        temp_max: "",
-        temp_min: "",
-        humidity: ""
-      },
-      nextWeather: [],
-      date: ""
+      address: {
+        endereco: "",
+        lat: "",
+        lng: "",
+        formatted_address: "",
+        weather: {
+          weatherIcon: "",
+          weatherDescription: "",
+          temp: "",
+          temp_max: "",
+          temp_min: "",
+          humidity: ""
+        },
+        nextWeather: [],
+        date: "",
+        time: ""
+      }
     };
   },
   mounted() {
+    let storage;
     try {
-      this.getUserLocation();
+      storage = JSON.parse(localStorage.getItem("address"));
     } catch (e) {}
+
+    if (storage) {
+      const date = new Date();
+      if (date.getTime() < storage.time) {
+        console.log("use storage");
+        this.address = storage;
+      } else {
+        console.log("storage minor");
+        try {
+          this.getUserLocation();
+        } catch (e) {}
+      }
+    } else {
+      console.log("No Storage");
+      try {
+        this.getUserLocation();
+      } catch (e) {}
+    }
   },
   methods: {
     async getUserLocation() {
       navigator.geolocation.getCurrentPosition(async data => {
-        this.endereco = await api.getUserLocation(
+        this.address.endereco = await api.getUserLocation(
           data.coords.latitude,
           data.coords.longitude
         );
@@ -98,18 +120,26 @@ export default {
     },
     async getData() {
       try {
-        const address = await api.getData(this.endereco);
+        const address = await api.getData(this.address.endereco);
         const weather = await api.getweather(
           address.lat,
           address.lng,
           address.formatted_address
         );
-        this.nextWeather = await api.nextWeather();
-        this.formatted_address = address.formatted_address;
-        this.date = moment().format("LLLL");
-        this.lat = address.lat;
-        this.lng = address.lng;
-        this.weather = weather;
+        this.address.nextWeather = await api.nextWeather();
+        this.address.formatted_address = address.formatted_address;
+        let date = new Date();
+        date = new Date(
+          `${date.getFullYear()}-${date.getMonth() +
+            1}-${date.getDate()} ${date.getHours()}:00:00`
+        );
+        this.address.date = moment(date).format("LLLL");
+        this.address.time = date.setHours(date.getHours() + 1);
+        console.log(date.setHours(date.getHours() + 1));
+        this.address.lat = address.lat;
+        this.address.lng = address.lng;
+        this.address.weather = weather;
+        localStorage.setItem("address", JSON.stringify(this.address));
       } catch (error) {
         console.log(error);
       }
