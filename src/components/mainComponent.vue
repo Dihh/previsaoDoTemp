@@ -98,17 +98,18 @@ export default {
     },
     async getData() {
       try {
-        this.date = moment().format("LLLL");
         const address = await api.getData(this.endereco);
-        this.lat = address.lat;
-        this.lng = address.lng;
-        this.weather = await api.getweather(
-          this.lat,
-          this.lng,
+        const weather = await api.getweather(
+          address.lat,
+          address.lng,
           address.formatted_address
         );
-        this.formatted_address = address.formatted_address;
         this.nextWeather = await api.nextWeather();
+        this.formatted_address = address.formatted_address;
+        this.date = moment().format("LLLL");
+        this.lat = address.lat;
+        this.lng = address.lng;
+        this.weather = weather;
       } catch (error) {
         console.log(error);
       }
@@ -131,7 +132,7 @@ export default {
 }
 
 .input-div {
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .input-div input {
@@ -155,6 +156,7 @@ export default {
 
 .formatted_address {
   font-size: 150%;
+  margin-bottom: 10px;
 }
 
 .weather {
@@ -180,5 +182,24 @@ export default {
 
 .weatherDescriptionText {
   margin-top: 20px;
+  font-size: 130%;
+  font-weight: bold;
+}
+
+@media only screen and (max-width: 600px) {
+  .input-div input {
+    height: calc(1.7em + 0.75rem + 2px);
+    font-size: 120%;
+    line-height: 1.7;
+  }
+
+  .weatherDescription div {
+    margin-left: 5px;
+  }
+
+  .formatted_address {
+    font-size: 150%;
+    margin-bottom: 20px;
+  }
 }
 </style>

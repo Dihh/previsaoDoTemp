@@ -29,4 +29,11 @@ body {
   padding: 0px;
   margin: 0px;
 }
+
+@media only screen and (max-width: 600px) {
+  #app {
+    margin-left: 0px;
+    margin-right: 0px;
+  }
+}
 </style>
