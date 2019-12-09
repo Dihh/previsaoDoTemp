@@ -45,19 +45,11 @@ describe('HelloWorld.vue', () => {
   }))
 
   const wrapper = shallowMount(mainComponent, {})
+  console.log(wrapper.vm);
   it('input on change', async () => {
     expect(wrapper.vm.endereco).toBe('')
     const input = wrapper.find('input')
     input.setValue(endereco)
-    input.trigger('change')
-    await wrapper.vm.$nextTick();
-    expect(axios.get).toHaveBeenCalledTimes(2);
-    expect(axios.get).toHaveBeenCalledWith(`https://maps.googleapis.com/maps/api/geocode/json?address=${endereco}&key=${GOOGLE_API_KEY}`)
-    expect(wrapper.vm.lat).toBe(1)
-    expect(wrapper.vm.lng).toBe(2)
-    await wrapper.vm.$nextTick();
-    expect(wrapper.vm.formatted_address).toBe(endereco)
-    expect(wrapper.vm.weather.weatherIcon).toBe(`10`)
-    expect(wrapper.vm.weather.weatherDescription).toBe('test')
+
   })
 })
